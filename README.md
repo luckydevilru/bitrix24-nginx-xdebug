@@ -19,3 +19,6 @@
 CREATE USER 'bitrix'@'%' IDENTIFIED BY '1234';
 GRANT ALL PRIVILEGES ON sitemanager.* TO 'bitrix'@'%';
 FLUSH PRIVILEGES;`
+
+## скрин производительности:
+![alt perfomance_screen](https://github.com/luckydevilru/bitrix24-nginx-xdebug/blob/master/Screenshot%20From%202024-11-14%2012-49-48.png)
