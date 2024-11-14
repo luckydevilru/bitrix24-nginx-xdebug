@@ -8,6 +8,7 @@ services:
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf
       - /run/media/iboss/udata/dev/php/bx24.loc:/var/www/html
+      - /run/media/iboss/udata/dev/php/bxapps.loc:/var/www/bxapps
       - ./certs:/etc/nginx/ssl
     depends_on:
       - php
@@ -19,6 +20,7 @@ services:
     container_name: php_bx24
     volumes:
       - /run/media/iboss/udata/dev/php/bx24.loc:/var/www/html
+      - /run/media/iboss/udata/dev/php/bxapps.loc:/var/www/bxapps
       - ./www.conf:/usr/local/etc/php-fpm.d/www.conf
       - ./php.ini:/usr/local/etc/php/php.ini
     networks:
