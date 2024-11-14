@@ -24,6 +24,7 @@ services:
     networks:
       - bx24_network
 
+  # тот же mysql
   mariadb:
     image: mariadb:11.5
     container_name: mariadb_bx24
