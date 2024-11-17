@@ -26,7 +26,7 @@ RUN mkdir -p /var/lib/php/session && \
 RUN pecl install xdebug && docker-php-ext-enable xdebug
 
 # Настройка прав доступа к корневой директории
-RUN chown -R 1000:1000 /var/www/html && chmod -R 755 /var/www/html && mkdir /var/log/apps && chown 1000:1000 /var/log/apps
+RUN chown -R 1000:1000 /var/www/html && chmod -R 755 /var/www/html && mkdir /var/log/apps && chown 1000:1000 /var/log/apps && update-ca-certificates
 
 # Перезапуск sendmail при запуске контейнера
 RUN sed -i '/#!\/bin\/sh/aservice sendmail restart' /usr/local/bin/docker-php-entrypoint

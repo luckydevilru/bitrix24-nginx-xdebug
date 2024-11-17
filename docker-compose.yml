@@ -14,6 +14,9 @@ services:
       - php
     networks:
       - bx24_network
+    extra_hosts:
+      - "b24.doc:host-gateway"
+      - "bxapps.doc:host-gateway"
 
   php:
     build: .
@@ -23,8 +26,14 @@ services:
       - /run/media/iboss/udata/dev/php/bxapps.loc:/var/www/bxapps
       - ./www.conf:/usr/local/etc/php-fpm.d/www.conf
       - ./php.ini:/usr/local/etc/php/php.ini
+      - ./certs:/usr/local/share/ca-certificates/
     networks:
       - bx24_network
+    extra_hosts:
+      - "b24.doc:host-gateway"
+      - "bxapps.doc:host-gateway"
+    dns:
+      - 10.16.3.3 #днс корпоративной сети
 
   # тот же mysql
   mariadb:
