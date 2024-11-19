@@ -12,11 +12,7 @@ services:
       - ./certs:/etc/nginx/ssl
     depends_on:
       - php
-    networks:
-      - bx24_network
-    extra_hosts:
-      - "b24.doc:host-gateway"
-      - "bxapps.doc:host-gateway"
+    network_mode: "host"
 
   php:
     build: .
@@ -27,13 +23,7 @@ services:
       - ./www.conf:/usr/local/etc/php-fpm.d/www.conf
       - ./php.ini:/usr/local/etc/php/php.ini
       - ./certs:/usr/local/share/ca-certificates/
-    networks:
-      - bx24_network
-    extra_hosts:
-      - "b24.doc:host-gateway"
-      - "bxapps.doc:host-gateway"
-    dns:
-      - 10.16.3.3 #днс корпоративной сети
+    network_mode: "host"
 
   # тот же mysql
   mariadb:
@@ -52,30 +42,4 @@ services:
       nofile:
         soft: 128000
         hard: 128000
-    networks:
-      - bx24_network
-
-  phpmyadmin:
-    image: phpmyadmin/phpmyadmin
-    restart: no
-    links:
-      - mariadb:db
-    ports:
-      - 8765:83
-    environment:
-      MYSQL_ROOT: 'root'
-      MYSQL_ROOT_PASSWORD: '0000'
-      MYSQL_USER: 'bitrix'
-      MYSQL_PASS: '1234'
-      UPLOAD_LIMIT: 300M
-    depends_on:
-      - mariadb
-    networks:
-      - bx24_network
-    volumes:
-      - ./my.cnf:/etc/mysql/conf.d/my.cnf
-      - /var/lib/mysql:/var/lib/mysql
-
-networks:
-  bx24_network:
-    name: bx24_network
+    network_mode: "host"
