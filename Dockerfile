@@ -13,10 +13,11 @@ RUN apt-get update && apt-get install -y \
     libjpeg62-turbo-dev \
     libpng-dev \
     ca-certificates \
+    librdkafka-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) gd mysqli opcache sockets pdo pdo_mysql iconv gd zip \
-    && pecl install xdebug \
-    && docker-php-ext-enable xdebug \
+    && pecl install xdebug rdkafka\
+    && docker-php-ext-enable xdebug rdkafka \
     && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /usr/share/doc/*
 
 # Создание директории для сессий PHP и установка нужных прав
@@ -32,3 +33,4 @@ RUN chown -R 1000:1000 /var/www/html && chmod -R 755 /var/www/html && mkdir /var
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+CMD ["php-fpm"]
