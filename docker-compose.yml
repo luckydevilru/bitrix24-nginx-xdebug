@@ -7,23 +7,25 @@ services:
       - "443:443"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf
-      - /run/media/iboss/udata/dev/php/bx24.loc:/var/www/html/bx24.loc
-      - /run/media/iboss/udata/dev/php/bxapps.loc:/var/www/html/bxapps/
+      - /run/media/iboss/udata/dev/php:/var/www/html
       - ./certs:/etc/nginx/ssl
+      - ./kafka_certs:/etc/nginx/ssl/kafka_abs/
     depends_on:
       - php
-    network_mode: "host"
+    networks:
+      - bx24_network
 
   php:
     build: .
     container_name: php_bx24
     volumes:
-      - /run/media/iboss/udata/dev/php/bx24.loc:/var/www/html/bx24.loc
-      - /run/media/iboss/udata/dev/php/bxapps.loc:/var/www/html/bxapps/
+      - /run/media/iboss/udata/dev/php:/var/www/html
       - ./www.conf:/usr/local/etc/php-fpm.d/www.conf
       - ./php.ini:/usr/local/etc/php/php.ini
       - ./certs:/usr/local/share/ca-certificates/
-    network_mode: "host"
+      - ./kafka_certs:/etc/nginx/ssl/kafka_abs/
+    networks:
+      - bx24_network
 
   # тот же mysql
   mariadb:
@@ -42,4 +44,8 @@ services:
       nofile:
         soft: 128000
         hard: 128000
-    network_mode: "host"
+    networks:
+      - bx24_network
+networks:
+  bx24_network:
+    driver: bridge
