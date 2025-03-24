@@ -14,10 +14,11 @@ RUN apt-get update && apt-get install -y \
     libpng-dev \
     ca-certificates \
     librdkafka-dev \
+    libicu-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install -j$(nproc) gd mysqli opcache sockets pdo pdo_mysql iconv gd zip \
+    && docker-php-ext-install -j$(nproc) gd mysqli opcache sockets pdo pdo_mysql iconv gd zip intl \
     && pecl install xdebug rdkafka\
-    && docker-php-ext-enable xdebug rdkafka \
+    && docker-php-ext-enable xdebug rdkafka intl \
     && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /usr/share/doc/*
 
 # Создание директории для сессий PHP и установка нужных прав
