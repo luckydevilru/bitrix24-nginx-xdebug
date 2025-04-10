@@ -28,14 +28,11 @@ services:
       - ./certs:/usr/local/share/ca-certificates/
       - ./kafka_certs:/etc/nginx/ssl/kafka_abs/
     networks:
-      bx24_network:
-        aliases:
-          - b24.doc
-          - bxapps.doc
+      - bx24_network
 
   # тот же mysql
   mariadb:
-    image: mariadb:11.5
+    image: mariadb:11.7
     container_name: mariadb_bx24
     environment:
       MARIADB_ROOT_PASSWORD: 123456
@@ -52,6 +49,7 @@ services:
         hard: 128000
     networks:
       - bx24_network
+
 networks:
   bx24_network:
     driver: bridge
