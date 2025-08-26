@@ -17,6 +17,7 @@ services:
         aliases:
           - b24.doc
           - bxapps.doc
+          - "*.java.loc"
 
   php:
     build: .
@@ -29,6 +30,29 @@ services:
       - ./kafka_certs:/etc/nginx/ssl/kafka_abs/
     networks:
       - bx24_network
+
+  java:
+    image: eclipse-temurin:21-jre
+    container_name: java_bx24
+    working_dir: /apps
+    volumes:
+      - /run/media/iboss/udata/dev/java:/apps
+      - ./java-runner.sh:/usr/local/bin/java-runner.sh
+    command: [ "/bin/bash", "/usr/local/bin/java-runner.sh" ]
+    environment:
+      - JAVA_OPTS=-Xmx256m -Xms128m
+      - SPRING_PROFILES_ACTIVE=docker
+      - DB_HOST=mariadb
+      - DB_PORT=3306
+      - DB_USER=bitrix
+      - DB_PASSWORD=1234
+    ports:
+      - "8080-8099:8080-8099"
+    depends_on:
+      - mariadb
+    networks:
+      - bx24_network
+    restart: unless-stopped
 
   # тот же mysql
   mariadb:
