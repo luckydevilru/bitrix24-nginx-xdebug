@@ -15,6 +15,7 @@ RUN apt-get update && apt-get install -y \
     ca-certificates \
     librdkafka-dev \
     libicu-dev \
+    cron \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) gd mysqli opcache sockets pdo pdo_mysql iconv gd zip intl \
     && pecl install xdebug rdkafka\

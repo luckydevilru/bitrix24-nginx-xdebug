@@ -3,6 +3,29 @@
 # Простой запуск Spring Boot приложений
 set -e
 
+echo "📜 Check existing certificates"
+
+KEYSTORE="$JAVA_HOME/lib/security/cacerts"
+
+declare -A CERTS
+CERTS=(
+  ["rootca"]="/usr/local/share/ca-certificates/rootCA.pem"
+  ["javaloc"]="/usr/local/share/ca-certificates/java.loc.crt"
+)
+
+for ALIAS in "${!CERTS[@]}"; do
+    FILE="${CERTS[$ALIAS]}"
+    if keytool -list -keystore "$KEYSTORE" -alias "$ALIAS" -storepass changeit &>/dev/null; then
+        echo "Alias $ALIAS уже существует, пропускаем импорт"
+    else
+        echo "Импортируем $ALIAS из $FILE"
+        keytool -importcert -trustcacerts -noprompt -alias "$ALIAS" -file "$FILE" -keystore "$KEYSTORE" -storepass changeit
+    fi
+done
+
+NGINX_UPSTREAM_FILE=/tmp/java_upstreams.conf
+echo "" > "$NGINX_UPSTREAM_FILE"
+
 echo "🚀 Starting Java Applications Manager..."
 echo "📁 Apps directory: /apps"
 
@@ -14,11 +37,28 @@ java -version
 
 # Функция для установки зависимостей
 install_dependencies() {
-    echo "📦 Installing dependencies..."
-    apt-get update -qq > /dev/null 2>&1
-    apt-get install -y curl python3 > /dev/null 2>&1
-    echo "✅ Dependencies installed"
+    echo "📦 Checking dependencies..."
+
+    deps=(curl python3)
+    missing=()
+
+    for pkg in "${deps[@]}"; do
+        if dpkg -s "$pkg" &>/dev/null; then
+            echo "✔️  $pkg уже установлен"
+        else
+            missing+=("$pkg")
+        fi
+    done
+
+    if [ ${#missing[@]} -gt 0 ]; then
+        apt-get update -qq > /dev/null 2>&1
+        apt-get install -y "${missing[@]}" > /dev/null 2>&1
+        echo "🟢 Установлены: ${missing[*]}"
+    else
+        echo "🟢 Все зависимости уже установлены"
+    fi
 }
+
 
 # Функция запуска приложения
 start_app() {
@@ -30,12 +70,12 @@ start_app() {
 
     # Ищем JAR файл
     local jar_file=""
-    if [ -f "$app_dir/target/"*.jar ]; then
-        jar_file=$(find "$app_dir/target/" -name "*.jar" | head -n 1)
-    elif [ -f "$app_dir/build/libs/"*.jar ]; then
-        jar_file=$(find "$app_dir/build/libs/" -name "*.jar" | head -n 1)
-    elif [ -f "$app_dir/"*.jar ]; then
-        jar_file=$(find "$app_dir/" -maxdepth 1 -name "*.jar" | head -n 1)
+    if compgen -G "$app_dir/target/*.jar" > /dev/null; then
+        jar_file=$(ls -1 "$app_dir/target/"*.jar | head -n 1)
+    elif compgen -G "$app_dir/build/libs/*.jar" > /dev/null; then
+        jar_file=$(ls -1 "$app_dir/build/libs/"*.jar | head -n 1)
+    elif compgen -G "$app_dir/*.jar" > /dev/null; then
+        jar_file=$(ls -1 "$app_dir/"*.jar | head -n 1)
     fi
 
     if [ -z "$jar_file" ]; then
@@ -62,7 +102,7 @@ start_app() {
 
     local pid=$!
     echo "$pid" > "/tmp/${app_name}.pid"
-    echo "✅ $app_name started with PID: $pid on port $port"
+    echo "🟢 $app_name started with PID: $pid on port $port"
 
     # Ждем запуска приложения
     echo "⏳ Waiting for $app_name to start..."
@@ -149,7 +189,7 @@ if __name__ == "__main__":
 PYEOF
 
     python3 /tmp/app_router.py &
-    echo "✅ Router started"
+    echo "🟢 Router started"
 }
 
 # Основная логика
@@ -160,11 +200,13 @@ main() {
 
     # Подсчитываем приложения
     app_count=0
+    shopt -s nullglob
     for app_dir in /apps/*/; do
         if [ -d "$app_dir" ]; then
-            ((app_count++))
+          app_count=$((app_count+1))
         fi
     done
+    shopt -u nullglob
 
     if [ $app_count -eq 0 ]; then
         echo "⚠️  No applications found in /apps/"
@@ -178,14 +220,25 @@ main() {
     echo "📊 Found $app_count applications"
 
     # Запускаем приложения
-    current_port=8080
+    current_port=8081  # стартовый порт
+
     for app_dir in /apps/*/; do
         if [ -d "$app_dir" ]; then
+            app_name=$(basename "$app_dir")
+
+            # запускаем приложение на current_port
             start_app "$app_dir" $current_port &
-            sleep 2  # Задержка между запусками
+
+            # пишем в файл для nginx
+            echo "upstream ${app_name}_backend { server java:${current_port}; }" >> "$NGINX_UPSTREAM_FILE"
+
+            echo "📡 $app_name -> port $current_port mapped for nginx"
+
             ((current_port++))
+            sleep 1
         fi
     done
+
 
     # Запускаем роутер
     start_router
@@ -205,7 +258,7 @@ main() {
                 app_name=$(basename "$pid_file" .pid)
 
                 if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
-                    echo "✅ $app_name (PID: $pid) - OK"
+                    echo "🟢 $app_name (PID: $pid) - OK"
                 else
                     echo "💀 $app_name - DEAD, removing PID file"
                     rm -f "$pid_file"

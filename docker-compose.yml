@@ -1,3 +1,6 @@
+volumes:
+  java_nginx_conf: { }
+
 services:
   nginx:
     image: nginx:latest
@@ -10,6 +13,7 @@ services:
       - /run/media/iboss/udata/dev/php:/var/www/html
       - ./certs:/etc/nginx/ssl
       - ./kafka_certs:/etc/nginx/ssl/kafka_abs/
+      - java_nginx_conf:/tmp
     depends_on:
       - php
     networks:
@@ -26,6 +30,7 @@ services:
       - /run/media/iboss/udata/dev/php:/var/www/html
       - ./www.conf:/usr/local/etc/php-fpm.d/www.conf
       - ./php.ini:/usr/local/etc/php/php.ini
+      - ./conf/cron/php.ini:/usr/local/etc/php/php.ini
       - ./certs:/usr/local/share/ca-certificates/
       - ./kafka_certs:/etc/nginx/ssl/kafka_abs/
     networks:
@@ -37,7 +42,9 @@ services:
     working_dir: /apps
     volumes:
       - /run/media/iboss/udata/dev/java:/apps
+      - ./certs:/usr/local/share/ca-certificates/
       - ./java-runner.sh:/usr/local/bin/java-runner.sh
+      - java_nginx_conf:/tmp
     command: [ "/bin/bash", "/usr/local/bin/java-runner.sh" ]
     environment:
       - JAVA_OPTS=-Xmx256m -Xms128m

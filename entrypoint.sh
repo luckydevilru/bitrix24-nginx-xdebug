@@ -7,3 +7,5 @@ update-ca-certificates
 # Запуск PHP-FPM
 echo "Starting PHP-FPM..."
 exec php-fpm
+
+service cron start
