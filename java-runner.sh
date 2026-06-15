@@ -23,7 +23,7 @@ for ALIAS in "${!CERTS[@]}"; do
     fi
 done
 
-NGINX_UPSTREAM_FILE=/tmp/java_upstreams.conf
+NGINX_UPSTREAM_FILE=/etc/nginx/java/java_upstreams.conf
 echo "" > "$NGINX_UPSTREAM_FILE"
 
 echo "🚀 Starting Java Applications Manager..."

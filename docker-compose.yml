@@ -13,7 +13,7 @@ services:
       - /run/media/iboss/udata/dev/php:/var/www/html
       - ./certs:/etc/nginx/ssl
       - ./kafka_certs:/etc/nginx/ssl/kafka_abs/
-      - java_nginx_conf:/tmp
+      - ./conf/nginx/java:/etc/nginx/java/
     depends_on:
       - php
     networks:
@@ -26,13 +26,15 @@ services:
   php:
     build: .
     container_name: php_bx24
+    user: "1000:1000"
     volumes:
       - /run/media/iboss/udata/dev/php:/var/www/html
-      - ./www.conf:/usr/local/etc/php-fpm.d/www.conf
+      - ./conf/bxapps.conf:/usr/local/etc/php-fpm.d/bxapps.conf
+      - ./conf/bxapps.conf:/usr/local/etc/php-fpm.d/b24.conf
       - ./php.ini:/usr/local/etc/php/php.ini
-      - ./conf/cron/php.ini:/usr/local/etc/php/php.ini
       - ./certs:/usr/local/share/ca-certificates/
       - ./kafka_certs:/etc/nginx/ssl/kafka_abs/
+      - ./sessions:/var/lib/php/sessions:rw
     networks:
       - bx24_network
 
@@ -61,7 +63,6 @@ services:
       - bx24_network
     restart: unless-stopped
 
-  # тот же mysql
   mariadb:
     image: mariadb:11.7
     container_name: mariadb_bx24
@@ -70,7 +71,7 @@ services:
       MARIADB_DATABASE: sitemanager
       MARIADB_USER: bitrix
       MARIADB_PASSWORD: 1234
-    user: "952:952"  # Указать UID и GID из команды 'id mysql' с локального компа!
+    user: "952:952"
     volumes:
       - ./my.cnf:/etc/mysql/conf.d/my.cnf
       - /var/lib/mysql:/var/lib/mysql
