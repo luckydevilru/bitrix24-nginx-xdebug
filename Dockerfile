@@ -24,14 +24,15 @@ RUN apt-get update && apt-get install -y \
 # Создание директории для сессий PHP и установка нужных прав
 RUN mkdir -p /var/lib/php/session && \
     chown -R 1000:1000 /var/lib/php/session && \
-    chmod 1733 /var/lib/php/session
+    chmod 1733 /var/lib/php/session && \
+    chown -R 1000:1000 /var/www/html && chmod -R 755 /var/www/html && mkdir /var/log/apps && chown 1000:1000 /var/log/apps
 
 
-# Настройка прав доступа к корневой директории
-RUN chown -R 1000:1000 /var/www/html && chmod -R 755 /var/www/html && mkdir /var/log/apps && chown 1000:1000 /var/log/apps
 
 # Добавление серты
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["php-fpm"]
+
+WORKDIR /var/www/html

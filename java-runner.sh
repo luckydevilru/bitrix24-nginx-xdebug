@@ -230,7 +230,7 @@ main() {
             start_app "$app_dir" $current_port &
 
             # пишем в файл для nginx
-            echo "upstream ${app_name}_backend { server java:${current_port}; }" >> "$NGINX_UPSTREAM_FILE"
+            echo "upstream ${app_name}_backend { server java_bx24:${current_port}; }" >> "$NGINX_UPSTREAM_FILE"
 
             echo "📡 $app_name -> port $current_port mapped for nginx"
 

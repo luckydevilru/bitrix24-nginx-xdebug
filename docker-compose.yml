@@ -1,6 +1,7 @@
 volumes:
   java_nginx_conf: { }
-
+  mimo_agent_data: { }
+# services.nginx.networks.bx24_network
 services:
   nginx:
     image: nginx:latest
@@ -13,11 +14,13 @@ services:
       - /run/media/iboss/udata/dev/php:/var/www/html
       - ./certs:/etc/nginx/ssl
       - ./kafka_certs:/etc/nginx/ssl/kafka_abs/
-      - ./conf/nginx/java:/etc/nginx/java/
+      - java_nginx_conf:/etc/nginx/java/
     depends_on:
       - php
+      - java
     networks:
-      bx24_network:
+      bx24-local: {} # Локальная сеть для общения с PHP и Java
+      bx24_network: # Внешняя сеть для связи с AI и алиасов
         aliases:
           - b24.doc
           - bxapps.doc
@@ -27,6 +30,8 @@ services:
     build: .
     container_name: php_bx24
     user: "1000:1000"
+    environment:
+      - HOME=/home/mimo
     volumes:
       - /run/media/iboss/udata/dev/php:/var/www/html
       - ./conf/bxapps.conf:/usr/local/etc/php-fpm.d/bxapps.conf
@@ -35,8 +40,9 @@ services:
       - ./certs:/usr/local/share/ca-certificates/
       - ./kafka_certs:/etc/nginx/ssl/kafka_abs/
       - ./sessions:/var/lib/php/sessions:rw
+      - mimo_agent_data:/home/mimo
     networks:
-      - bx24_network
+      - bx24-local
 
   java:
     image: eclipse-temurin:21-jre
@@ -45,8 +51,8 @@ services:
     volumes:
       - /run/media/iboss/udata/dev/java:/apps
       - ./certs:/usr/local/share/ca-certificates/
+      - java_nginx_conf:/etc/nginx/java
       - ./java-runner.sh:/usr/local/bin/java-runner.sh
-      - java_nginx_conf:/tmp
     command: [ "/bin/bash", "/usr/local/bin/java-runner.sh" ]
     environment:
       - JAVA_OPTS=-Xmx256m -Xms128m
@@ -60,7 +66,7 @@ services:
     depends_on:
       - mariadb
     networks:
-      - bx24_network
+      - bx24-local
     restart: unless-stopped
 
   mariadb:
@@ -71,7 +77,7 @@ services:
       MARIADB_DATABASE: sitemanager
       MARIADB_USER: bitrix
       MARIADB_PASSWORD: 1234
-    user: "952:952"
+    #user: "999:952"
     volumes:
       - ./my.cnf:/etc/mysql/conf.d/my.cnf
       - /var/lib/mysql:/var/lib/mysql
@@ -80,8 +86,11 @@ services:
         soft: 128000
         hard: 128000
     networks:
-      - bx24_network
+      - bx24-local
 
 networks:
-  bx24_network:
+  bx24-local:
     driver: bridge
+  bx24_network:
+    external: true
+    name: bx24_network
