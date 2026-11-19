@@ -24,8 +24,11 @@ for ALIAS in "${!CERTS[@]}"; do
 done
 
 NGINX_UPSTREAM_FILE=/etc/nginx/java/java_upstreams.conf
-echo "" > "$NGINX_UPSTREAM_FILE"
 
+# Проверяем, существует ли файл (-f)
+if [ -f "$NGINX_UPSTREAM_FILE" ]; then
+    echo "" > "$NGINX_UPSTREAM_FILE"
+fi
 echo "🚀 Starting Java Applications Manager..."
 echo "📁 Apps directory: /apps"
 

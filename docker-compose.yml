@@ -14,12 +14,19 @@ services:
       - /run/media/iboss/udata/dev/php:/var/www/html
       - ./certs:/etc/nginx/ssl
       - ./kafka_certs:/etc/nginx/ssl/kafka_abs/
-      - java_nginx_conf:/etc/nginx/java/
     depends_on:
       - php
       - java
     networks:
-      bx24-local: {} # Локальная сеть для общения с PHP и Java
+      bx24-local: # Локальная сеть для общения с PHP и Java
+        aliases:
+          # Алиасы нужны и здесь: Docker DNS отдаёт их контейнерам
+          # (php/java/mariadb) в этой сети. Без них запрос на b24.doc
+          # проваливается на хостовый резолвер, где 127.0.0.1 b24.doc
+          # (нужный для браузера на хосте) и curl внутри php получает
+          # Connection refused на 127.0.0.1:443.
+          - b24.doc
+          - bxapps.doc
       bx24_network: # Внешняя сеть для связи с AI и алиасов
         aliases:
           - b24.doc
@@ -52,8 +59,6 @@ services:
       - /run/media/iboss/udata/dev/java:/apps
       - ./certs:/usr/local/share/ca-certificates/
       - java_nginx_conf:/etc/nginx/java
-      - ./java-runner.sh:/usr/local/bin/java-runner.sh
-    command: [ "/bin/bash", "/usr/local/bin/java-runner.sh" ]
     environment:
       - JAVA_OPTS=-Xmx256m -Xms128m
       - SPRING_PROFILES_ACTIVE=docker
@@ -78,6 +83,11 @@ services:
       MARIADB_USER: bitrix
       MARIADB_PASSWORD: 1234
     #user: "999:952"
+    # Проброс на хост (только localhost), чтобы ai-agents (host-сеть) подключался
+    # стабильно по 127.0.0.1:3306, а не по "плавающему" bridge-IP контейнера,
+    # который меняется при каждом рестарте.
+    ports:
+      - "127.0.0.1:3306:3306"
     volumes:
       - ./my.cnf:/etc/mysql/conf.d/my.cnf
       - /var/lib/mysql:/var/lib/mysql
